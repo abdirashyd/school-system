@@ -114,70 +114,29 @@ def dashboard_view(request):
             return render(request, 'dashboard.html', context)
         except Teacher.DoesNotExist:
             return render(request, 'dashboard.html', {'my_classes': [], 'my_subjects': 0, 'total_students': 0, 'pending_results': 0})
-    
-    # ========== STUDENT DASHBOARD ==========
-    elif user.role == 'STUDENT':
-        from students.models import Attendance
-        student_profile = getattr(user, 'student_record_records', None)
-        
-        if student_profile:
-            total_days = student_profile.attendances.count()
-            present_days = student_profile.attendances.filter(status='Present').count()
-            attendance_percent = round((present_days / total_days * 100) if total_days > 0 else 0)
-            
-            context = {
-                'student': student_profile,
-                'attendance_percent': attendance_percent,
-                'total_marks': student_profile.get_total_marks(),
-                'mean_score': student_profile.get_mean_marks(),
-                'class_rank': student_profile.get_rank(),
-                'fee_balance': student_profile.get_fee_balance(),
-                'recent_results': student_profile.results.all().select_related('subject', 'exam')[:5],
-                'recent_attendance': student_profile.attendances.all().order_by('-date')[:5],
-            }
-            return render(request, 'dashboard.html', context)
+        # ========== STUDENT - Redirect to profile ==========
+    if user.role == 'STUDENT':
+        if hasattr(user, 'student_record_records'):
+            return redirect('students_detail', pk=user.student_record_records.id)
         else:
-            return render(request, 'dashboard.html', {'error': 'Student profile not found'})
+            messages.error(request, "Student profile not found.")
+            return redirect('dashboard')
     
-    # ========== PARENT DASHBOARD ==========
+    # ========== PARENT - Redirect to children or profile ==========
     elif user.role == 'PARENT':
-        
-        # Get children of this parent
-        children = Students.objects.filter(parents=user).select_related('current_class')
-        
+        from students.models import Students
+        children = Students.objects.filter(parents=user)
         if children.count() == 1:
-            # Single child - show their dashboard
-            student = children.first()
-            
-            # Calculate attendance percentage
-            total_days = student.attendances.count()
-            present_days = student.attendances.filter(status='Present').count()
-            attendance_percent = round((present_days / total_days * 100) if total_days > 0 else 0)
-            
-            context = {
-                'student': student,
-                'attendance_percent': attendance_percent,
-                'total_marks': student.get_total_marks(),
-                'mean_score': student.get_mean_marks(),
-                'class_rank': student.get_rank(),
-                'fee_balance': student.get_fee_balance(),
-                'recent_results': student.results.all().select_related('subject', 'exam')[:5],
-                'recent_attendance': student.attendances.all().order_by('-date')[:5],
-            }
-            return render(request, 'dashboard.html', context)
-        
+            return redirect('students_detail', pk=children.first().id)
         elif children.count() > 1:
-            # Multiple children - show list to select
-            context = {
-                'children': children,
-            }
-            return render(request, 'dashboard.html', context)
-        
+            # Show list of children using student_list template
+            return render(request, 'students/student_list.html', {
+                'students': children,
+                'is_parent_view': True
+            })
         else:
-            # No children linked
-            return render(request, 'dashboard.html', {'error': 'No children linked to your account'})
-    
-    # Fallback - should never reach here
+            messages.error(request, "No children linked to your account.")
+            return redirect('dashboard')
     return render(request, 'dashboard.html', {'error': 'Role not recognized'})
 
 
