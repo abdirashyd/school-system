@@ -1,0 +1,114 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Classrooms{% endblock %}
+
+{% block content %}
+
+<div class="list-header">
+    <div class="list-title">
+        <h1>Classrooms</h1>
+        <p>View all classes and their students</p>
+    </div>
+    {% if request.user.role == 'SUPER_ADMIN' %}
+    <a href="{% url 'add_classroom' %}" class="add-btn">
+        <i class="fas fa-plus"></i> Add Classroom
+    </a>
+    {% endif %}
+</div>
+
+<!-- Search Bar -->
+<div class="search-container">
+    <form method="GET" class="search-form">
+        <div class="search-input-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" name="search" placeholder="Search by class name or stream..." value="{{ search_query }}">
+        </div>
+        <button type="submit" class="search-btn">Search</button>
+        {% if search_query %}
+        <a href="{% url 'classroom_list' %}" class="clear-btn">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Classroom Cards Grid -->
+<div class="classrooms-grid">
+    {% for classroom in classrooms %}
+    <div class="classroom-card" onclick="toggleStudents('class-{{ classroom.id }}')">
+        <div class="card-header">
+            <div class="class-icon">
+                <i class="fas fa-building"></i>
+            </div>
+            <div class="class-info">
+                <h3>{{ classroom.name }} {% if classroom.stream %}{{ classroom.stream }}{% endif %}</h3>
+                <div class="class-meta">
+                    <span><i class="fas fa-users"></i> {{ classroom.get_students_count }} Students</span>
+                    <span><i class="fas fa-user-tie"></i> {{ classroom.class_teacher.get_full_name|default:"No Teacher" }}</span>
+                    <span><i class="fas fa-chart-line"></i> Status: {{ classroom.get_capacity_status }}</span>
+                    <span><i class="fas fa-coins"></i> KES {{ classroom.fee_amount|floatformat:0 }}/month</span>
+                </div>
+            </div>
+            <div class="card-arrow">
+                <i class="fas fa-chevron-down"></i>
+            </div>
+        </div>
+        
+        <!-- Student List (Hidden by default) -->
+        <div id="class-{{ classroom.id }}" class="students-list" style="display: none;">
+            <div class="students-header">
+                <h4><i class="fas fa-user-graduate"></i> Students in {{ classroom.name }} {% if classroom.stream %}{{ classroom.stream }}{% endif %}</h4>
+                <span class="student-count">{{ classroom.students.count }} total</span>
+            </div>
+            {% if classroom.students.all %}
+            <div class="students-grid">
+                {% for student in classroom.students.all %}
+                <a href="{% url 'students_detail' student.id %}" class="student-card-link">
+                    <div class="student-card-mini">
+                        <div class="student-avatar-mini">
+                            {{ student.first_name|first }}{{ student.last_name|first }}
+                        </div>
+                        <div class="student-info-mini">
+                            <strong>{{ student.first_name }} {{ student.last_name }}</strong>
+                            <span>{{ student.registration_number }}</span>
+                        </div>
+                    </div>
+                </a>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-students">
+                <i class="fas fa-user-slash"></i>
+                <p>No students enrolled in this class yet</p>
+                <a href="{% url 'register_page' %}" class="small-btn">Add Student</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% empty %}
+    <div class="empty-state-card">
+        <i class="fas fa-school"></i>
+        <p>No classrooms found</p>
+        {% if request.user.role == 'SUPER_ADMIN' %}
+        <a href="{% url 'add_classroom' %}" class="add-btn">Add Your First Classroom</a>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    function toggleStudents(id) {
+        const element = document.getElementById(id);
+        const card = element.closest('.classroom-card');
+        const arrow = card.querySelector('.card-arrow i');
+        
+        if (element.style.display === 'none') {
+            element.style.display = 'block';
+            arrow.style.transform = 'rotate(180deg)';
+        } else {
+            element.style.display = 'none';
+            arrow.style.transform = 'rotate(0deg)';
+        }
+    }
+</script>
+
+{% endblock %}

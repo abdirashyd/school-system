@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Exams Directory{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Examinations</h1>
+    <p>A complete list of all registered exams.</p>
+</div>
+
+<div class="data-table-container">
+    <div class="data-table-header">
+        <h2>Exam List</h2>
+        
+    </div>
+    
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Exam Name</th>
+                    <th>Date</th>
+                    <th>Exam Type</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for exam in exams %}
+                <tr>
+                    <td>{{ exam.name }}</td>
+                    <td>{{ exam.date_started|date:"d M Y, H:i" }}</td>
+                    <td>{{ exam.get_exam_type_display }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="table-empty">
+                        <i class="fas fa-pen-to-square"></i><br>
+                        No exams found. 
+                        <a href="{% url 'add_exam' %}" style="color: var(--soft-green);">Add one now?</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

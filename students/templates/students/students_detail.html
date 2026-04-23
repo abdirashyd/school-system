@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ student.first_name }} {{ student.last_name }}{% endblock %}
+
+{% block content %}
+
+<div class="profile-container">
+    <!-- Profile Header -->
+    <div class="profile-header">
+        <div class="profile-avatar">
+            <div class="avatar-large">
+                {{ student.first_name|first }}{{ student.last_name|first }}
+            </div>
+        </div>
+        <div class="profile-info">
+            <h1>{{ student.first_name }} {{ student.last_name }}</h1>
+            <p class="profile-badge">{{ student.registration_number }}</p>
+            <div class="profile-meta">
+                <span><i class="fas fa-calendar-alt"></i> Enrolled: {{ student.date_enrolled|date:"d M Y" }}</span>
+                <span><i class="fas fa-building"></i> Class: {{ student.current_class|default:"Not Assigned" }}</span>
+                <span><i class="fas fa-user-friends"></i> Parent: {% if student.parents %}{{ student.parents.get_full_name|default:student.parents.username }}{% else %}Not assigned{% endif %}</span>
+                {% if student.has_leadership %}
+                <span><i class="fas fa-star"></i> Leadership: Yes</span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="profile-stats">
+        <div class="stat-item">
+            <div class="stat-value">{{ student.get_total_marks|default:"0" }}</div>
+            <div class="stat-label">Total Marks</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ student.get_mean_marks|floatformat:1|default:"0.0" }}</div>
+            <div class="stat-label">Mean Score</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">{{ student.get_rank|default:"N/A" }}</div>
+            <div class="stat-label">Class Rank</div>
+        </div>
+    </div>
+
+    <!-- Two Column Layout -->
+    <div class="profile-grid">
+        <!-- Left Column - Results -->
+        <div class="profile-card">
+            <div class="card-header">
+                <h3><i class="fas fa-chart-line"></i> Exam Results</h3>
+                <a href="{% url 'results' %}" class="view-link">View All →</a>
+            </div>
+            <div class="table-wrapper">
+                <table class="profile-table">
+                    <thead>
+                        <tr>
+                            <th>Subject</th>
+                            <th>Exam</th>
+                            <th>Marks</th>
+                            <th>Grade</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in student.results.all %}
+                        <tr>
+                            <td>{{ result.subject.name }}</td>
+                            <td>{{ result.exam.name }}</td>
+                            <td>{{ result.marks_obtained }}/{{ result.out_of }}</td>
+                            <td>
+                                <span class="grade-badge">{{ result.grades }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="empty-state-small">No results recorded yet</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Right Column - Attendance & Info -->
+        <div>
+            <!-- Attendance Card -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-calendar-check"></i> Recent Attendance</h3>
+                </div>
+                <div class="table-wrapper">
+                    <table class="profile-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Remarks</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for attendance in student.attendances.all|slice:":10" %}
+                            <tr>
+                                <td>{{ attendance.date|date:"d M Y" }}</td>
+                                <td>
+                                    {% if attendance.status == 'Present' %}
+                                        <span class="status-present">✓ Present</span>
+                                    {% elif attendance.status == 'Absent' %}
+                                        <span class="status-absent">✗ Absent</span>
+                                    {% elif attendance.status == 'Late' %}
+                                        <span class="status-late">⏰ Late</span>
+                                    {% else %}
+                                        <span class="status-excused">ℹ Excused</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ attendance.remarks|default:"-" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="3" class="empty-state-small">No attendance records yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Personal Info Card (UPDATED with new fields) -->
+            <div class="profile-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-user-circle"></i> Personal Information</h3>
+                </div>
+                <div class="info-list">
+                    <div class="info-row">
+                        <span class="info-label">Full Name:</span>
+                        <span class="info-value">{{ student.first_name }} {{ student.last_name }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Admission Number:</span>
+                        <span class="info-value">{{ student.registration_number }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Gender:</span>
+                        <span class="info-value">{{ student.gender|default:"Not specified"|title }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Class:</span>
+                        <span class="info-value">{{ student.current_class|default:"Not Assigned" }}</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Date Enrolled:</span>
+                        <span class="info-value">{{ student.date_enrolled|date:"d M Y" }}</span>
+                    </div>
+                    <!-- NEW: Leadership -->
+                    <div class="info-row">
+                        <span class="info-label">Leadership Position:</span>
+                        <span class="info-value">
+                            {% if student.has_leadership %}
+                                <span class="leadership-yes"><i class="fas fa-star"></i> Yes</span>
+                            {% else %}
+                                <span class="leadership-no">No</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <!-- NEW: Address -->
+                    <div class="info-row">
+                        <span class="info-label">Residence:</span>
+                        <span class="info-value">{{ student.address|default:"Not provided" }}</span>
+                    </div>
+                    <!-- NEW: Medical Condition -->
+                    <div class="info-row">
+                        <span class="info-label">Medical Condition:</span>
+                        <span class="info-value">
+                            {% if student.medical_condition %}
+                                <span class="medical-info">{{ student.medical_condition }}</span>
+                            {% else %}
+                                <span class="text-muted">None reported</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Parent/Guardian:</span>
+                        <span class="info-value">
+                            {% if student.parents %}
+                                {{ student.parents.get_full_name|default:student.parents.username }}
+                                <br>
+                                <small>{{ student.parents.email }}</small>
+                                <br>
+                                <small>Phone: {{ student.parents.phone_number|default:"-" }}</small>
+                            {% else %}
+                                Not assigned
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                {% if request.user.role == 'SUPER_ADMIN' or request.user.role == 'ADMIN' %}
+                <div class="card-actions">
+                    <a href="#" class="btn-edit-profile">Edit Profile</a>
+                    <a href="#" class="btn-assign-parent">Assign Parent</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.leadership-yes {
+    color: #856404;
+    background: #fff3cd;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.leadership-no {
+    color: #6c757d;
+    background: #e9ecef;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.medical-info {
+    background: #e8d4f8;
+    color: #6f42c1;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    display: inline-block;
+}
+
+.text-muted {
+    color: #6c757d;
+}
+</style>
+
+{% endblock %}

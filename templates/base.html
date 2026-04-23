@@ -1,0 +1,256 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduNexus | {% block title %}Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+
+    <!-- Top Navigation -->
+    <nav class="top-nav">
+        <div class="nav-left">
+            <div class="hamburger" id="hamburger">☰</div>
+            <div class="logo">EduNexus</div>
+        </div>
+        
+        <div class="search-bar">
+            <span>🔎</span>
+            <input type="text" id="globalSearch" placeholder="Search students, teachers...">
+        </div>
+
+        <div class="nav-right">
+            <div class="notification-badge" id="notificationBell">
+                <span>🔔</span>
+                <span class="badge-count" id="unreadBadge">0</span>
+            </div>
+            <div>
+                <div class="user-info" id="userInfoBtn">
+                    <div class="avatar-circle">
+                        {{ request.user.first_name|first|default:request.user.username|first|upper }}
+                    </div>
+                    <div>
+                        <div class="user-name">{{ request.user.first_name|default:request.user.username }}</div>
+                        <div class="user-role">{{ request.user.get_role_display }}</div>
+                    </div>
+                    <i class="fas fa-chevron-down"></i>
+                </div>
+                <div class="dropdown-menu" id="userDropdown">
+                    <a href="{% url 'change_password' %}"><i class="fas fa-key"></i> Change Password</a>
+                    <a href="{% url 'logout' %}" onclick="return confirmLogout()"><i class="fas fa-sign-out-alt"></i> Logout</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <ul>
+            {% if request.user.role != 'STUDENT' and request.user.role != 'PARENT' %}
+            <li class="menu-item {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}" data-url="{% url 'dashboard' %}">
+                <span class="menu-text">🏠 Home</span>
+            </li>
+            {% endif %}
+
+           {% if request.user.role == 'SUPER_ADMIN' or request.user.role == 'ADMIN' %}
+            <li class="menu-item has-dropdown">
+                <span class="menu-text">👤 Admin</span>
+                <span class="arrow">›</span>
+            </li>
+            <ul class="dropdown">
+                <li data-url="{% url 'user_list' %}">User Management</li>
+                <li data-url="{% url 'register_page' %}">➕ Register User</li>
+            </ul>
+            {% endif %}
+
+            <li class="menu-item has-dropdown">
+                <span class="menu-text">👩‍🎓 Students</span>
+                <span class="arrow">›</span>
+            </li>
+            <ul class="dropdown">
+                {% if request.user.role == 'SUPER_ADMIN' or request.user.role == 'ADMIN' %}
+                    <li data-url="{% url 'student_list' %}">All Students</li>
+                    <li data-url="{% url 'attendance_report' %}">Attendance</li>
+                {% elif request.user.role == 'TEACHER' %}
+                    <li data-url="{% url 'student_list' %}">My Students</li>
+                    <li data-url="{% url 'attendance_report' %}">Mark Attendance</li>
+                {% elif request.user.role == 'PARENT' %}
+                    <li data-url="{% url 'student_list' %}">My Children</li>
+                {% elif request.user.role == 'STUDENT' %}
+                    <li data-url="{% url 'student_list' %}">My Profile</li>
+                {% endif %}
+            </ul>
+            {% if request.user.role != 'PARENT' and request.user.role != 'STUDENT' %}
+            
+            <li class="menu-item has-dropdown">
+                <span class="menu-text">👨‍🏫 Teachers</span>
+                <span class="arrow">›</span>
+            </li>
+            <ul class="dropdown">
+                <li data-url="{% url 'teacher_list' %}">All Teachers</li>
+
+            </ul>
+            {% endif %}
+            <li class="menu-item has-dropdown">
+                <span class="menu-text">📚 Academic</span>
+                <span class="arrow">›</span>
+            </li>
+            <ul class="dropdown">
+                {% if request.user.role != 'STUDENT' and request.user.role != 'PARENT' %}
+                <li data-url="{% url 'classroom_list' %}">Classes</li>
+                {% endif %}
+                <li data-url="{% url 'subject_list' %}">Subjects</li>
+                <li data-url="{% url 'exam_list' %}">Exams</li>
+                <li data-url="{% url 'results' %}">Results</li>
+            </ul>
+
+            {% if request.user.role != 'TEACHER' %}
+            
+            <li class="menu-item has-dropdown">
+                <span class="menu-text">💰 Finance</span>
+                <span class="arrow">›</span>
+            </li>
+            <ul class="dropdown">
+                <li data-url="{% url 'payement_detail' %}">Payments</li>
+            </ul>
+            {% endif %}
+
+            <li class="menu-item has-dropdown">
+                <span class="menu-text">📝 Exams</span>
+                <span class="arrow">›</span>
+            </li>
+            <ul class="dropdown">
+                <li data-url="{% url 'exam_list' %}">Schedule</li>
+                <li data-url="{% url 'results' %}">Results</li>
+                {% if request.user.role != 'STUDENT' and request.user.role != 'PARENT' %}
+                <li data-url="{% url 'add_results' %}">Enter Results</li>
+                {% endif %}
+            </ul>
+
+            {% if request.user.role == 'TEACHER' %}
+            <li class="menu-item" data-url="{% url 'add_results' %}">
+                <span class="menu-text">📝 Add Results</span>
+            </li>
+            {% endif %}
+
+            {% if request.user.role == 'SUPER_ADMIN' %}
+            <li class="menu-item has-dropdown">
+                <span class="menu-text">➕ Add New</span>
+                <span class="arrow">›</span>
+            </li>
+            <ul class="dropdown">
+                <li data-url="{% url 'add_classroom' %}">Add Classroom</li>
+                <li data-url="{% url 'add_subject' %}">Add Subject</li>
+                <li data-url="{% url 'add_exam' %}">Add Exam</li>
+            </ul>
+            {% endif %}
+        </ul>
+    </aside>
+
+    <main class="main-content">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        {% endif %}
+        
+        {% block content %}
+        {% endblock %}
+    </main>
+
+    <script>
+        document.querySelectorAll('.has-dropdown').forEach(menu => {
+            menu.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const dropdown = this.nextElementSibling;
+                const arrow = this.querySelector('.arrow');
+                
+                document.querySelectorAll('.dropdown').forEach(dd => {
+                    if (dd !== dropdown) dd.classList.remove('show');
+                });
+                document.querySelectorAll('.arrow').forEach(ar => {
+                    if (ar !== arrow) ar.style.transform = 'rotate(0deg)';
+                });
+                
+                dropdown.classList.toggle('show');
+                if (arrow) {
+                    arrow.style.transform = dropdown.classList.contains('show') ? 'rotate(90deg)' : 'rotate(0deg)';
+                }
+            });
+        });
+        
+        document.querySelectorAll('.menu-item[data-url]').forEach(item => {
+            item.addEventListener('click', () => window.location.href = item.getAttribute('data-url'));
+        });
+        document.querySelectorAll('.dropdown li[data-url]').forEach(item => {
+            item.addEventListener('click', () => window.location.href = item.getAttribute('data-url'));
+        });
+        
+        const userInfoBtn = document.getElementById('userInfoBtn');
+        const userDropdown = document.getElementById('userDropdown');
+        if (userInfoBtn) {
+            userInfoBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                userDropdown.classList.toggle('show');
+            });
+        }
+        document.addEventListener('click', () => userDropdown?.classList.remove('show'));
+        
+        const hamburger = document.getElementById('hamburger');
+        const sidebar = document.getElementById('sidebar');
+        if (hamburger) {
+            hamburger.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sidebar.classList.toggle('open');
+            });
+        }
+        document.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768 && sidebar && hamburger) {
+                if (!sidebar.contains(e.target) && !hamburger.contains(e.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
+        
+        const globalSearch = document.getElementById('globalSearch');
+        if (globalSearch) {
+            globalSearch.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    window.location.href = '/students/all/?search=' + encodeURIComponent(e.target.value);
+                }
+            });
+        }
+        
+        const notificationBell = document.getElementById('notificationBell');
+        if (notificationBell) {
+            notificationBell.addEventListener('click', () => window.location.href = "{% url 'user_notifications' %}");
+        }
+        
+        function updateUnreadCount() {
+            fetch('/notifications/unread-count/')
+                .then(res => res.json())
+                .then(data => {
+                    const badge = document.getElementById('unreadBadge');
+                    if (badge && data.unread_count > 0) {
+                        badge.style.display = 'inline-block';
+                        badge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+                    } else if (badge) {
+                        badge.style.display = 'none';
+                    }
+                });
+        }
+        setInterval(updateUnreadCount, 30000);
+        updateUnreadCount();
+        
+        function confirmLogout() {
+            return confirm("Are you sure you want to logout?");
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+
+<!-- ========== SUPER ADMIN / ADMIN DASHBOARD ========== -->
+{% if request.user.role == 'SUPER_ADMIN' or request.user.role == 'ADMIN' %}
+
+<div class="welcome-section">
+    <h1>Good {{ greeting }}, {{ request.user.first_name|default:request.user.username }}! 👋</h1>
+    <p class="welcome-text">Here's your school management overview</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-header"><span>Total Students</span><i class="fas fa-user-graduate"></i></div>
+        <div class="stat-number">{{ total_students|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-header"><span>Total Teachers</span><i class="fas fa-chalkboard-user"></i></div>
+        <div class="stat-number">{{ total_teachers|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-header"><span>Total Classes</span><i class="fas fa-building"></i></div>
+        <div class="stat-number">{{ total_classes|default:"0" }}</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-header"><span>Total Subjects</span><i class="fas fa-book"></i></div>
+        <div class="stat-number">{{ top_subjects|length|default:"0" }}</div>
+    </div>
+</div>
+
+<div class="two-columns">
+    <div>
+        <!-- Subjects Card -->
+        <div class="card">
+            <div class="card-header"><h3>📚 Subjects</h3><a href="{% url 'subject_list' %}" class="view-all">View All →</a></div>
+            <div class="course-list">
+                {% for subject in top_subjects|slice:":5" %}
+                <div class="course-item">
+                    <div class="course-info"><h4>{{ subject.name }}</h4><div class="course-meta">{{ subject.code }}</div></div>
+                    <div class="course-status">{{ subject.teacher.get_full_name|default:"Not Assigned" }}</div>
+                </div>
+                {% empty %}<p class="empty-message">No subjects added yet.</p>{% endfor %}
+            </div>
+        </div>
+
+        <!-- ✅ GENDER DISTRIBUTION CHART -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-venus-mars"></i> Students by Class & Gender</h3>
+                <span class="view-all">Boys vs Girls</span>
+            </div>
+            <div class="gender-chart-container">
+                <div class="gender-chart">
+                    {% for data in chart_data %}
+                    <div class="gender-bar-group">
+                        <div class="class-label">{{ data.class_name }}</div>
+                        <div class="bars-wrapper">
+                            <div class="bar-boy" style="height: {{ data.boys|default:0 }}px;" title="Boys: {{ data.boys }}">
+                                <span class="bar-value">{{ data.boys }}</span>
+                            </div>
+                            <div class="bar-girl" style="height: {{ data.girls|default:0 }}px;" title="Girls: {{ data.girls }}">
+                                <span class="bar-value">{{ data.girls }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="empty-chart">
+                        <i class="fas fa-chart-bar"></i>
+                        <p>No data available. Add students to see chart.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="chart-legend">
+                <span><i class="fas fa-square" style="color: #3b82f6;"></i> Boys</span>
+                <span><i class="fas fa-square" style="color: #ec489a;"></i> Girls</span>
+            </div>
+        </div>
+
+        <!-- Recent Students Card -->
+        <div class="card">
+            <div class="card-header"><h3>👨‍🎓 Recent Students</h3><a href="{% url 'student_list' %}" class="view-all">View All →</a></div>
+            <div class="student-list">
+                {% for student in recent_students|slice:":5" %}
+                <div class="student-item">
+                    <div class="student-info"><h4>{{ student.first_name }} {{ student.last_name }}</h4><p>{{ student.registration_number }}</p></div>
+                    <div class="student-score"><div class="score">{{ student.get_mean_marks|floatformat:0|default:"0" }}%</div></div>
+                </div>
+                {% empty %}<p class="empty-message">No students yet.</p>{% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <!-- Plan Card -->
+        <div class="card plan-card">
+            <h4>EduNexus System</h4>
+            <div class="plan-price">School Management</div>
+            <div class="expiry-date">Version 1.0</div>
+        </div>
+
+        <!-- Subject Performance Card -->
+        <div class="card">
+            <div class="card-header"><h3>📈 Subject Performance</h3></div>
+            <div class="improvement-list">
+                {% for improvement in improvements|slice:":5" %}
+                <div class="improvement-item">
+                    <span class="improvement-name">{{ improvement.name }}</span>
+                    <div class="progress-bar"><div class="progress-fill" style="width: {{ improvement.percentage }}%;"></div></div>
+                    <span class="percentage">{{ improvement.percentage }}%</span>
+                </div>
+                {% empty %}<p class="empty-message">No data available.</p>{% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== TEACHER DASHBOARD ========== -->
+{% elif request.user.role == 'TEACHER' %}
+
+<div class="welcome-section">
+    <h1>Good {{ greeting }}, {{ request.user.first_name|default:request.user.username }}! 👋</h1>
+    <p class="welcome-text">Here are your assigned classes and students</p>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card"><div class="stat-header"><span>My Classes</span><i class="fas fa-building"></i></div><div class="stat-number">{{ my_classes.count|default:"0" }}</div></div>
+    <div class="stat-card"><div class="stat-header"><span>My Students</span><i class="fas fa-user-graduate"></i></div><div class="stat-number">{{ total_students|default:"0" }}</div></div>
+    <div class="stat-card"><div class="stat-header"><span>My Subjects</span><i class="fas fa-book"></i></div><div class="stat-number">{{ my_subjects|default:"0" }}</div></div>
+    <div class="stat-card"><div class="stat-header"><span>Pending Results</span><i class="fas fa-clock"></i></div><div class="stat-number">{{ pending_results|default:"0" }}</div></div>
+</div>
+
+<div class="card">
+    <div class="card-header"><h3>📚 My Classes</h3><a href="{% url 'attendance_report' %}" class="view-all">Mark Attendance →</a></div>
+    <div class="classes-list">
+        {% for class in my_classes %}
+        <div class="class-card" style="padding: 15px; border-bottom: 1px solid var(--border);">
+            <h4>{{ class.name }} {% if class.stream %}({{ class.stream }}){% endif %}</h4>
+            <div class="class-stats" style="margin: 10px 0;">👨‍🎓 Students: {{ class.get_students_count }}</div>
+            <div class="class-actions"><a href="{% url 'add_results' %}">Enter Results →</a></div>
+        </div>
+        {% empty %}<p class="empty-message">No classes assigned yet.</p>{% endfor %}
+    </div>
+</div>
+
+{% endif %}
+
+<script>
+    // Greeting based on time of day
+    const hour = new Date().getHours();
+    let greeting = 'Morning';
+    if (hour >= 12 && hour < 17) greeting = 'Afternoon';
+    else if (hour >= 17) greeting = 'Evening';
+    const welcomeH1 = document.querySelector('.welcome-section h1');
+    if (welcomeH1) {
+        welcomeH1.innerHTML = welcomeH1.innerHTML.replace('Good {{ greeting }}', `Good ${greeting}`);
+    }
+</script>
+
+{% endblock %}

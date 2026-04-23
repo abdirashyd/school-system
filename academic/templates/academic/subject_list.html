@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Subjects Directory{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>Subjects</h1>
+    <p>A complete list of all registered subjects and their assigned teachers.</p>
+</div>
+
+<div class="data-table-container">
+    <div class="data-table-header">
+        <h2>Subject List</h2>
+        <a href="{% url 'add_subject' %}" class="add-btn">
+            <i class="fas fa-plus"></i> Add Subject
+        </a>
+    </div>
+    
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Subject</th>
+                    <th>Code</th>
+                    <th>Assigned Teacher</th>
+                    <th>Teacher Contact</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for subject in subjects %}
+                <tr>
+                    <td>{{ subject.name }}</td>
+                    <td>{{ subject.code }}</td>
+                    <td>
+                        {% if subject.teacher %}
+                            {{ subject.teacher.get_full_name|default:subject.teacher.username }}
+                        {% else %}
+                            <span class="text-warning">Not Assigned</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if subject.teacher %}
+                            {{ subject.teacher.email }}
+                        {% else %}
+                            <span class="text-muted">-</span>
+                        {% endif %}
+                    </td>
+                   
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="table-empty">
+                        <i class="fas fa-book-open"></i><br>
+                        No subjects found. 
+                        <a href="{% url 'add_subject' %}" style="color: var(--soft-green);">Add one now?</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

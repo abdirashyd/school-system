@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Add Results{% endblock %}
+
+{% block content %}
+
+<div class="register-container">
+    <div class="register-header">
+        <h1>Enter Student Marks</h1>
+        <p>Grades will be calculated automatically based on the score.</p>
+    </div>
+
+    <div class="register-form active">
+        <form method="POST">
+            {% csrf_token %}
+
+            <div class="form-group">
+                <label>Student Name <span class="required">*</span></label>
+                <select name="student" required>
+                    <option value="">-- Select Student --</option>
+                    {% for student in students %}
+                        <option value="{{ student.id }}">{{ student.first_name }} {{ student.last_name }} ({{ student.registration_number }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Subject <span class="required">*</span></label>
+                    <select name="subject" required>
+                        {% for sub in subjects %}
+                            <option value="{{ sub.id }}">{{ sub.name }} ({{ sub.code }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Exam <span class="required">*</span></label>
+                    <select name="exam" required>
+                        <option value="">-- Select Exam --</option>
+                        {% for exam in exams %}
+                            <option value="{{ exam.id }}">{{ exam.name }} ({{ exam.get_exam_type_display }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Marks (0 - 100) <span class="required">*</span></label>
+                <input type="number" name="marks_obtained" required placeholder="e.g., 85" min="0" max="100">
+            </div>
+
+            <div class="form-group">
+                <label>Teacher's Remarks</label>
+                <textarea name="teacher_remark" rows="3" placeholder="Optional comment..."></textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-save"></i> Submit Result
+                </button>
+                <a href="{% url 'results' %}" class="btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

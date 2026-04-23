@@ -1,0 +1,211 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>System Users</h1>
+    <p>A complete list of all registered users.</p>
+</div>
+
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }}">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Search and Filter Bar -->
+<div class="search-bar">
+    <form method="GET" class="search-form">
+        <input type="text" name="search" placeholder="Search by username, name, or email..." 
+               value="{{ search_query }}">
+        <select name="role">
+            <option value="">All Roles</option>
+            <option value="SUPER_ADMIN" {% if role_filter == 'SUPER_ADMIN' %}selected{% endif %}>Super Admin</option>
+            <option value="ADMIN" {% if role_filter == 'ADMIN' %}selected{% endif %}>Admin</option>
+            <option value="TEACHER" {% if role_filter == 'TEACHER' %}selected{% endif %}>Teacher</option>
+            <option value="STUDENT" {% if role_filter == 'STUDENT' %}selected{% endif %}>Student</option>
+            <option value="PARENT" {% if role_filter == 'PARENT' %}selected{% endif %}>Parent</option>
+        </select>
+        <button type="submit" class="btn btn-primary">
+            <i class="fas fa-search"></i> Search
+        </button>
+        {% if search_query or role_filter %}
+        <a href="{% url 'user_list' %}" class="btn btn-outline">Clear</a>
+        {% endif %}
+    </form>
+</div>
+
+<div class="data-table-container">
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Username / ADM</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.username }}</td>
+                    <td>
+                        {% if user.role == 'STUDENT' and user.student_record_records %}
+                            {{ user.student_record_records.first_name }} {{ user.student_record_records.last_name }}
+                        {% elif user.first_name or user.last_name %}
+                            {{ user.first_name }} {{ user.last_name }}
+                        {% else %}
+                            {{ user.get_full_name|default:user.username }}
+                        {% endif %}
+                    </td>
+                    <td>{{ user.email }}</td>
+                    <td>{{ user.get_role_display }}</td>
+                    <td>
+                        {% if user.is_active %}
+                            <span class="text-success">Active</span>
+                        {% else %}
+                            <span class="text-danger">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td class="action-buttons">
+                        <a href="{% url 'admin_reset_password' user.id %}" 
+                        onclick="return confirm('Reset password for {{ user.username }}?')"
+                        class="btn btn-warning btn-sm">
+                            <i class="fas fa-key"></i> Reset
+                        </a>
+                        {% if request.user.role == 'SUPER_ADMIN' and user.id != request.user.id %}
+                        <a href="{% url 'delete_user' user.id %}" 
+                        onclick="return confirm('Delete {{ user.username }}? This cannot be undone!')"
+                        class="btn btn-danger btn-sm">
+                            <i class="fas fa-trash"></i> Delete
+                        </a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="table-empty">
+                        <i class="fas fa-users"></i><br>
+                        {% if search_query %}
+                            No users found matching "{{ search_query }}".
+                        {% else %}
+                            No users found.
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div id="editUserModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Edit User</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+        </div>
+        
+        <form id="editUserForm">
+            {% csrf_token %}
+            <input type="hidden" name="user_id" id="edit_user_id">
+            
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" id="edit_username" disabled style="background: #f5f5f5;">
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name</label>
+                    <input type="text" name="first_name" id="edit_first_name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Last Name</label>
+                    <input type="text" name="last_name" id="edit_last_name" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" name="email" id="edit_email" required>
+            </div>
+            
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="text" name="phone_number" id="edit_phone">
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="is_active" id="edit_is_active"> Active (Can login)
+                </label>
+            </div>
+            
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" name="is_approved" id="edit_is_approved"> Approved
+                </label>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button type="submit" class="btn btn-success">Save Changes</button>
+                <button type="button" onclick="closeModal()" class="btn btn-outline">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const editModal = document.getElementById('editUserModal');
+    
+    function openEditModal(id, username, firstName, lastName, email, phone, role, isActive, isApproved) {
+        document.getElementById('edit_user_id').value = id;
+        document.getElementById('edit_username').value = username;
+        document.getElementById('edit_first_name').value = firstName;
+        document.getElementById('edit_last_name').value = lastName;
+        document.getElementById('edit_email').value = email;
+        document.getElementById('edit_phone').value = phone;
+        document.getElementById('edit_is_active').checked = isActive;
+        document.getElementById('edit_is_approved').checked = isApproved;
+        editModal.style.display = 'flex';
+    }
+    
+    function closeModal() {
+        editModal.style.display = 'none';
+    }
+    
+    window.onclick = function(e) {
+        if (e.target == editModal) closeModal();
+    }
+    
+    document.getElementById('editUserForm').onsubmit = async function(e) {
+        e.preventDefault();
+        const userId = document.getElementById('edit_user_id').value;
+        const formData = new FormData(this);
+        
+        const response = await fetch(`/edit-user/${userId}/`, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert(data.error || 'Error updating user');
+        }
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,360 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Register User{% endblock %}
+
+{% block content %}
+
+<div class="register-container">
+    <div class="register-header">
+        <h1>Register New User</h1>
+        <p>Select the type of user you want to register</p>
+    </div>
+    
+    <!-- Tab Buttons -->
+    <div class="register-tabs">
+        <button class="tab-btn active" data-tab="student">
+            <i class="fas fa-user-graduate"></i> Student
+        </button>
+        <button class="tab-btn" data-tab="teacher">
+            <i class="fas fa-chalkboard-user"></i> Teacher
+        </button>
+        <button class="tab-btn" data-tab="parent">
+            <i class="fas fa-users"></i> Parent
+        </button>
+    </div>
+    
+    <!-- Student Registration Form (UPDATED) -->
+    <div id="student-form" class="register-form active">
+        <h2>Register New Student</h2>
+        <form method="POST" action="{% url 'register_students' %}">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name <span class="required">*</span></label>
+                    <input type="text" name="first_name" placeholder="Enter first name" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name <span class="required">*</span></label>
+                    <input type="text" name="last_name" placeholder="Enter last name" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <input type="email" name="email" placeholder="student@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Admission Number <span class="required">*</span></label>
+                    <input type="text" name="admission_number" placeholder="e.g., ADM-001" required>
+                    <small>This will be the student's username</small>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Grade Level <span class="required">*</span></label>
+                    <select name="grade_level" required>
+                        <option value="">Select Grade</option>
+                        {% for classroom in classrooms %}
+                            <option value="{{ classroom.id }}">{{ classroom.name }} {% if classroom.stream %}({{ classroom.stream }}){% endif %}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Gender <span class="required">*</span></label>
+                    <select name="gender" required>
+                        <option value="">Select Gender</option>
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Phone Number</label>
+                    <input type="tel" name="phone_number" placeholder="Student's phone">
+                </div>
+                <div class="form-group">
+                    <label>Assign Parent (Optional)</label>
+                    <select name="parent_id">
+                        <option value="">-- Select Parent --</option>
+                        {% for parent in parents %}
+                            <option value="{{ parent.id }}">{{ parent.get_full_name|default:parent.username }} - {{ parent.phone_number|default:"No phone" }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            
+            <!-- ✅ NEW: Leadership Checkbox -->
+            <div class="form-group">
+                <label class="checkbox-label">
+                    <input type="checkbox" name="has_leadership" value="true">
+                    <span>Has Leadership Position</span>
+                </label>
+                <small>e.g., Class Prefect, Sports Captain, Head Boy/Girl</small>
+            </div>
+            
+            <!-- ✅ NEW: Residential Address -->
+            <div class="form-group">
+                <label>Residential Address</label>
+                <textarea name="address" rows="2" placeholder="Enter student's home address"></textarea>
+                <small>Where the student resides</small>
+            </div>
+            
+            <!-- ✅ NEW: Medical Condition -->
+            <div class="form-group">
+                <label>Medical Condition</label>
+                <textarea name="medical_condition" rows="2" placeholder="Any underlying medical conditions (allergies, asthma, etc.)"></textarea>
+                <small>Optional: Please provide any important medical information</small>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Register Student</button>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Teacher Registration Form (UPDATED - Removed department, added date_of_joining) -->
+    <!-- Teacher Registration Form - Updated (Subject is now OPTIONAL) -->
+<div id="teacher-form" class="register-form">
+    <h2>Register New Teacher</h2>
+    <form method="POST" action="{% url 'register_teacher' %}">
+        {% csrf_token %}
+        <div class="form-row">
+            <div class="form-group">
+                <label>First Name <span class="required">*</span></label>
+                <input type="text" name="first_name" placeholder="Enter first name" required>
+            </div>
+            <div class="form-group">
+                <label>Last Name <span class="required">*</span></label>
+                <input type="text" name="last_name" placeholder="Enter last name" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Email Address <span class="required">*</span></label>
+                <input type="email" name="email" placeholder="teacher@school.com" required>
+            </div>
+            <div class="form-group">
+                <label>TSC Number / Employee ID <span class="required">*</span></label>
+                <input type="text" name="tsc_number" placeholder="e.g., TCH-001" required>
+                <small>This will be the teacher's username</small>
+            </div>
+        </div>
+        
+        <!-- Date of Joining -->
+        <div class="form-row">
+            <div class="form-group">
+                <label>Date of Joining <span class="required">*</span></label>
+                <input type="date" name="date_of_joining" required>
+                <small>When the teacher started working</small>
+            </div>
+            <div class="form-group">
+                <label>Years of Experience <span class="required">*</span></label>
+                <input type="number" name="experience" required step="0.5" min="0" placeholder="e.g., 5.5">
+                <small>Total teaching experience</small>
+            </div>
+        </div>
+        
+        <!-- ✅ CHANGED: Assigned Subject is now OPTIONAL -->
+        <div class="form-group">
+            <label>Assigned Subject <span class="optional">(Optional)</span></label>
+            <select name="assigned_subject">
+                <option value="">-- Select Subject (Optional) --</option>
+                {% for subject in subjects %}
+                    <option value="{{ subject.id }}">{{ subject.name }} ({{ subject.code }})</option>
+                {% endfor %}
+            </select>
+            <small>You can assign a subject now or later in Subjects section</small>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Phone Number <span class="required">*</span></label>
+                <input type="tel" name="phone" placeholder="+254..." required>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label>Residential Address</label>
+            <input type="text" name="address" placeholder="e.g., Nairobi, Kenya">
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn-primary">Register Teacher</button>
+        </div>
+    </form>
+</div>
+    
+    <!-- Parent Registration Form (unchanged) -->
+    <div id="parent-form" class="register-form">
+        <h2>Register New Parent</h2>
+        <form method="POST" action="{% url 'register_parents' %}">
+            {% csrf_token %}
+            <div class="form-row">
+                <div class="form-group">
+                    <label>First Name <span class="required">*</span></label>
+                    <input type="text" name="first_name" placeholder="Enter first name" required>
+                </div>
+                <div class="form-group">
+                    <label>Last Name <span class="required">*</span></label>
+                    <input type="text" name="last_name" placeholder="Enter last name" required>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Email Address <span class="required">*</span></label>
+                    <input type="email" name="email" placeholder="parent@example.com" required>
+                </div>
+                <div class="form-group">
+                    <label>ID Number <span class="required">*</span></label>
+                    <input type="text" name="id_number" placeholder="e.g., 12345678" required>
+                    <small>This will be the parent's username</small>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Phone Number <span class="required">*</span></label>
+                    <input type="tel" name="phone_number" placeholder="e.g., 0712345678" required>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="submit" class="btn-primary">Register Parent</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.register-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.register-header {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.register-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    border-bottom: 1px solid #ddd;
+}
+
+.tab-btn {
+    padding: 10px 20px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s;
+}
+
+.tab-btn.active {
+    color: #28a745;
+    border-bottom: 2px solid #28a745;
+}
+
+.register-form {
+    display: none;
+}
+
+.register-form.active {
+    display: block;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    margin-bottom: 15px;
+}
+
+.form-group {
+    flex: 1;
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 500;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.form-group textarea {
+    resize: vertical;
+    font-family: inherit;
+}
+
+.required {
+    color: #dc3545;
+}
+
+small {
+    display: block;
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+}
+
+.checkbox-label {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.checkbox-label input {
+    width: auto;
+    margin-right: 10px;
+}
+
+.form-actions {
+    margin-top: 20px;
+    text-align: center;
+}
+
+.btn-primary {
+    background: #28a745;
+    color: white;
+    padding: 10px 30px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.btn-primary:hover {
+    background: #218838;
+}
+</style>
+
+<script>
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const forms = document.querySelectorAll('.register-form');
+    
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            forms.forEach(form => form.classList.remove('active'));
+            const tabId = this.getAttribute('data-tab');
+            document.getElementById(`${tabId}-form`).classList.add('active');
+        });
+    });
+</script>
+
+{% endblock %}

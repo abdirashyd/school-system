@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Notifications{% endblock %}
+
+{% block content %}
+
+<div class="list-header">
+    <div class="list-title">
+        <h1><i class="fas fa-bell"></i> Notifications</h1>
+        <p>Your messages and announcements</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>All Messages</h3>
+        <div class="action-buttons">
+            <a href="?mark_all_read=1" class="btn-view">
+                <i class="fas fa-check-double"></i> Mark All Read
+            </a>
+            <a href="{% url 'send_notification' %}" class="btn-edit">
+                {% if request.user.role != 'STUDENT' and request.user.role != 'PARENT' %}
+                <i class="fas fa-paper-plane"></i> New Notification
+                {% endif %}
+            </a>
+        </div>
+    </div>
+    
+    {% if notifications %}
+        {% for notification in notifications %}
+        <div class="notification-item" style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 12px; {% if not notification.is_read %}background: #faf5ff; border-left: 4px solid #c084fc;{% endif %}">
+            <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                <div>
+                    <h4 style="margin: 0 0 5px 0;">
+                        {{ notification.title }}
+                        {% if not notification.is_read %}
+                        <span style="background: #c084fc; color: white; font-size: 10px; padding: 2px 8px; border-radius: 12px; margin-left: 8px;">NEW</span>
+                        {% endif %}
+                    </h4>
+                    <div style="font-size: 12px; color: #6b7280;">
+                        <i class="fas fa-user"></i> From: {{ notification.sender.get_full_name|default:notification.sender.username }}
+                    </div>
+                </div>
+                <div style="font-size: 12px; color: #6b7280;">
+                    <i class="fas fa-clock"></i> {{ notification.created_at|date:"d M Y, H:i" }}
+                </div>
+            </div>
+            
+            <p style="margin: 12px 0; line-height: 1.5;">{{ notification.message }}</p>
+            
+            <div class="action-buttons" style="margin-top: 12px;">
+                {% if not notification.is_read %}
+                <a href="{% url 'mark_as_read' notification.id %}" class="btn-view" style="background: #c084fc; color: white;">
+                    <i class="fas fa-check"></i> Mark as Read
+                </a>
+                {% endif %}
+                <a href="{% url 'delete_notification' notification.id %}" onclick="return confirm('Delete this notification?')" class="btn-delete">
+                    <i class="fas fa-trash"></i> Delete
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fas fa-bell-slash"></i>
+            <p>No notifications yet</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

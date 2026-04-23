@@ -1,0 +1,74 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login | EduNexus</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="login-body">
+
+<div class="login-wrapper">
+    <div class="login-card">
+        <div class="login-logo">
+            <i class="fas fa-graduation-cap"></i>
+        </div>
+        
+        <h1>Welcome Back</h1>
+        <p class="login-subtitle">Sign in to continue to EduNexus</p>
+
+        <form method="POST" action="{% url 'login' %}">
+            {% csrf_token %}
+            
+            <div class="input-group">
+                <label>Username / Admission Number</label>
+                <input type="text" name="username" placeholder="Enter your username" required>
+            </div>
+
+            <div class="input-group">
+                <label>Password</label>
+                <div class="password-wrapper">
+                    <input type="password" name="password" id="password" placeholder="Enter your password" required>
+                    <button type="button" class="toggle-password" onclick="togglePassword()">
+                        <i class="far fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="login-options">
+                <label class="remember-me">
+                    <input type="checkbox" name="remember"> Remember me
+                </label>
+                <a href="#" class="forgot-link">Forgot password?</a>
+            </div>
+
+            <button type="submit" class="login-btn">Sign In</button>
+        </form>
+
+        <div class="login-footer">
+            <p>Don't have an account? <a href="#">Contact Administrator</a></p>
+        </div>
+    </div>
+</div>
+
+<script>
+    function togglePassword() {
+        const password = document.getElementById('password');
+        const toggle = document.querySelector('.toggle-password i');
+        if (password.type === 'password') {
+            password.type = 'text';
+            toggle.classList.remove('fa-eye');
+            toggle.classList.add('fa-eye-slash');
+        } else {
+            password.type = 'password';
+            toggle.classList.remove('fa-eye-slash');
+            toggle.classList.add('fa-eye');
+        }
+    }
+</script>
+
+</body>
+</html>
